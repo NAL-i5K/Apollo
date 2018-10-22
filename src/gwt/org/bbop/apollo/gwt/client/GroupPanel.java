@@ -64,8 +64,6 @@ import com.google.gwt.text.shared.SafeHtmlRenderer;
 import org.bbop.apollo.gwt.client.dto.GroupInfoConverter;
 import com.google.gwt.user.cellview.client.ColumnSortList;
 
-
-
 /**
  * Created by ndunn on 12/17/14.
  */
@@ -112,6 +110,7 @@ public class GroupPanel extends Composite {
     MultipleSelect availableGroupAdmin;
     @UiField
     Button updateGroupAdmin;
+    //adding
     @UiField
     org.gwtbootstrap3.client.ui.TextBox nameSearchBox;
 
@@ -126,9 +125,8 @@ public class GroupPanel extends Composite {
     private ListDataProvider<GroupOrganismPermissionInfo> permissionProvider = new ListDataProvider<>();
     private List<GroupOrganismPermissionInfo> permissionProviderList = permissionProvider.getList();
     private ColumnSortEvent.ListHandler<GroupOrganismPermissionInfo> sortHandler = new ColumnSortEvent.ListHandler<GroupOrganismPermissionInfo>(permissionProviderList);
-       
+    //adding
     private AsyncDataProvider<GroupInfo> dataProvider2;
-
 
     public GroupPanel() {
         initWidget(ourUiBinder.createAndBindUi(this));
@@ -181,8 +179,7 @@ public class GroupPanel extends Composite {
                 return o1.getNumberOfUsers() - o2.getNumberOfUsers();
             }
 
-        });
-        
+        });       
         //ADDING
         dataProvider2 = new AsyncDataProvider<GroupInfo>() {
             @Override
@@ -191,7 +188,6 @@ public class GroupPanel extends Composite {
                 final ColumnSortList sortList = dataGrid.getColumnSortList();
                 final int start = range.getStart();
                 final int length = range.getLength();
-
                 RequestCallback requestCallback = new RequestCallback() {
                     @Override
                     public void onResponseReceived(Request request, Response response) {
@@ -220,7 +216,6 @@ public class GroupPanel extends Composite {
                     }
                 };
 
-
                 ColumnSortList.ColumnSortInfo nameSortInfo = sortList.get(0);
                 if (nameSortInfo.getColumn().isSortable()) {
                     Column<GroupInfo, ?> sortColumn = (Column<GroupInfo, ?>) sortList.get(0).getColumn();
@@ -228,26 +223,18 @@ public class GroupPanel extends Composite {
                     String searchColumnString = columnIndex == 0 ? "name" : columnIndex == 1 ? "users" : "";
                     Boolean sortNameAscending = nameSortInfo.isAscending();
                     GroupRestService.loadGroups(requestCallback, start, length, nameSearchBox.getText(), searchColumnString, sortNameAscending);
-                //ending
                 }
             }
         };
-
-
         ColumnSortEvent.AsyncHandler columnSortHandler = new ColumnSortEvent.AsyncHandler(dataGrid);
         dataGrid.addColumnSortHandler(columnSortHandler);
         dataGrid.getColumnSortList().push(firstNameColumn);
         dataGrid.getColumnSortList().push(secondNameColumn);
-
         dataProvider.addDataDisplay(dataGrid);
         pager.setDisplay(dataGrid);
-        //end
-
-
-
+        //ending
 
         createOrganismPermissionsTable();
-
 
         Annotator.eventBus.addHandler(GroupChangeEvent.TYPE, new GroupChangeEventHandler() {
             @Override
@@ -415,30 +402,6 @@ public class GroupPanel extends Composite {
         dataGrid.setVisibleRangeAndClearData(dataGrid.getVisibleRange(), true);
         }
     //*******************
-
-
-        //String SearchName = nameSearchBox.getText().trim();
-
-        //if (SearchName.trim().length() > 0) 
-        //{
-        //setSelectedGroup();
-        //selectedGroupInfo = null;
-        //selectionModel.clear();
-                        
-        //pager.setPageStart(0);
-        //dataGrid.setVisibleRangeAndClearData(dataGrid.getVisibleRange(), true);
-
-        //reload();
-        //}
-
-        //for (GroupInfo groupInfo : groupInfoList)
-        //if (GroupName.trim().length() > 0 && GroupName.equals(groupInfo.getName())) 
-        //{
-        //System.out.print("YESYESYES");
-        //}
-  
-    //}     
-
 
     @UiHandler("createButton")
     public void createGroup(ClickEvent clickEvent) {
