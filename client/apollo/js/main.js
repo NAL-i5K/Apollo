@@ -627,6 +627,7 @@ return declare( [JBPlugin, HelpMixin],
                         if(this.get("checked")) domClass.add(win.body(), "colorCds");
                         else domClass.remove(win.body(),"colorCds");
                         browser.cookie("colorCdsByFrame", this.get("checked")?"true":"false");
+                        browser.view.redrawTracks();
                     }
                 });
         browser.addGlobalMenuItem( 'view', cds_frame_toggle );
