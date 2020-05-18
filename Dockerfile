@@ -1,26 +1,33 @@
-# Apollo2
-FROM tomcat:9-jdk8
+# Apollo2.X
+FROM ubuntu:18.04
 MAINTAINER Nathan Dunn <nathandunn@lbl.gov>
 ENV DEBIAN_FRONTEND noninteractive
 
-ENV CATALINA_HOME=/usr/local/tomcat
+# where bin directories are
+ENV CATALINA_HOME /usr/share/tomcat9
+# where webapps are deployed
+ENV CATALINA_BASE /var/lib/tomcat9
 ENV CONTEXT_PATH ROOT
+ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 
 RUN apt-get -qq update --fix-missing && \
 	apt-get --no-install-recommends -y install \
-	git build-essential maven libpq-dev postgresql-common openjdk-8-jdk wget \
-	postgresql postgresql-client xmlstarlet netcat libpng-dev \
-	zlib1g-dev libexpat1-dev ant curl ssl-cert zip unzip
+	git build-essential libpq-dev wget python3-pip \
+	lsb-release gnupg2 wget xmlstarlet netcat libpng-dev postgresql-common \
+	zlib1g-dev libexpat1-dev curl ssl-cert zip unzip openjdk-8-jdk-headless
 
-RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
+RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" >> /etc/apt/sources.list.d/pgdg.list' && \
+    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
+
 RUN apt-get -qq update --fix-missing && \
-	apt-get --no-install-recommends -y install nodejs && \
+	apt-get --no-install-recommends -y install \
+	postgresql-9.6 postgresql-client-9.6  tomcat9 && \
 	apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /apollo/
 
-RUN npm i -g yarn
+RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
+RUN apt-get -qq update --fix-missing && \
+	apt-get --no-install-recommends -y install nodejs
 
-RUN cp /usr/lib/jvm/java-8-openjdk-amd64/lib/tools.jar /usr/lib/jvm/java-8-openjdk-amd64/jre/lib/ext/tools.jar && \
-	useradd -ms /bin/bash -d /apollo apollo
 
 RUN curl -s "http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/blat/blat" -o /usr/local/bin/blat && \
  		chmod +x /usr/local/bin/blat && \
@@ -30,23 +37,44 @@ RUN curl -s "http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/blat/blat" -o
 		gunzip /chado.sql.gz
 
 #NOTE, we had problems with the build the archive-file coming in from github so using a clone instead
-ADD . /apollo
+RUN npm i -g yarn &&  useradd -ms /bin/bash -d /apollo apollo
+COPY client /apollo/client
+COPY gradlew /apollo
+COPY grails-app /apollo/grails-app
+COPY gwt-sdk /apollo/gwt-sdk
+COPY lib /apollo/lib
+COPY src /apollo/src
+COPY web-app /apollo/web-app
+COPY wrapper /apollo/wrapper
+COPY test /apollo/test
+COPY scripts /apollo/scripts
+ADD gra* /apollo/
+COPY apollo /apollo/apollo
+ADD build* /apollo/
+ADD settings.gradle /apollo
+ADD application.properties /apollo
+RUN ls /apollo
 
-# install grails
 COPY docker-files/build.sh /bin/build.sh
 ADD docker-files/docker-apollo-config.groovy /apollo/apollo-config.groovy
-
 RUN chown -R apollo:apollo /apollo
 
+# install grails and python libraries
 USER apollo
+
+RUN pip3 install setuptools
+RUN pip3 install nose "apollo==4.2"
+
 RUN curl -s get.sdkman.io | bash && \
-		/bin/bash -c "source $HOME/.sdkman/bin/sdkman-init.sh && yes | sdk install grails 2.5.5" && \
- 		/bin/bash -c "source $HOME/.sdkman/bin/sdkman-init.sh && yes | sdk install gradle 3.2.1" && \
- 		/bin/bash -c "source $HOME/.profile && source $HOME/.sdkman/bin/sdkman-init.sh && /bin/bash /bin/build.sh"
+     /bin/bash -c "source $HOME/.sdkman/bin/sdkman-init.sh && yes | sdk install grails 2.5.5" && \
+     /bin/bash -c "source $HOME/.sdkman/bin/sdkman-init.sh && yes | sdk install gradle 3.2.1"
+
+RUN /bin/bash -c "source $HOME/.sdkman/bin/sdkman-init.sh && /bin/bash /bin/build.sh"
 
 USER root
-RUN rm -rf ${CATALINA_HOME}/webapps/* && \
-	cp /apollo/apollo*.war ${CATALINA_HOME}/apollo.war
+# remove from webapps and copy it into a staging directory
+RUN rm -rf ${CATALINA_BASE}/webapps/* && \
+	cp /apollo/apollo*.war ${CATALINA_BASE}/apollo.war
 
 ADD docker-files/createenv.sh /createenv.sh
 ADD docker-files/launch.sh /launch.sh

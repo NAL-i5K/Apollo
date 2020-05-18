@@ -1,6 +1,8 @@
 package org.bbop.apollo
 
 import org.apache.commons.lang.WordUtils
+import org.bbop.apollo.geneProduct.GeneProduct
+import org.bbop.apollo.go.GoAnnotation
 import org.bbop.apollo.gwt.shared.FeatureStringEnum
 import org.bbop.apollo.sequence.Strand
 import org.grails.plugins.metrics.groovy.Timed
@@ -9,17 +11,19 @@ import java.text.SimpleDateFormat
 
 
 
-public class Gff3HandlerService {
+class Gff3HandlerService {
 
     def sequenceService
     def featureRelationshipService
     def transcriptService
-    def exonService
     def configWrapperService
     def requestHandlingService 
     def featureService
     def overlapperService
     def featurePropertyService
+    def geneProductService
+    def provenanceService
+    def goAnnotationService
 
     SimpleDateFormat gff3DateFormat = new SimpleDateFormat("YYYY-MM-dd")
 
@@ -42,6 +46,9 @@ public class Gff3HandlerService {
         writeObject.attributesToExport.add(FeatureStringEnum.OWNER.value);
         writeObject.attributesToExport.add(FeatureStringEnum.ATTRIBUTES.value);
         writeObject.attributesToExport.add(FeatureStringEnum.PUBMEDIDS.value);
+        writeObject.attributesToExport.add(FeatureStringEnum.GENE_PRODUCT.value);
+        writeObject.attributesToExport.add(FeatureStringEnum.PROVENANCE.value);
+        writeObject.attributesToExport.add(FeatureStringEnum.GO_ANNOTATIONS.value);
         writeObject.attributesToExport.add(FeatureStringEnum.GOIDS.value);
         writeObject.attributesToExport.add(FeatureStringEnum.COMMENTS.value);
         writeObject.attributesToExport.add(FeatureStringEnum.DATE_CREATION.value);
@@ -65,7 +72,7 @@ public class Gff3HandlerService {
 
 
     @Timed
-    public void writeFeatures(WriteObject writeObject, Collection<? extends Feature> features, String source) throws IOException {
+    void writeFeatures(WriteObject writeObject, Collection<? extends Feature> features, String source) throws IOException {
         Map<Sequence, Collection<Feature>> featuresBySource = new HashMap<Sequence, Collection<Feature>>();
         for (Feature feature : features) {
             Sequence sourceFeature = feature.featureLocation.sequence
@@ -87,7 +94,7 @@ public class Gff3HandlerService {
     }
 
     @Timed
-    public void writeFeatures(WriteObject writeObject, Iterator<? extends Feature> iterator, String source, boolean needDirectives) throws IOException {
+    void writeFeatures(WriteObject writeObject, Iterator<? extends Feature> iterator, String source, boolean needDirectives) throws IOException {
         while (iterator.hasNext()) {
             Feature feature = iterator.next();
             if (needDirectives) {
@@ -118,22 +125,22 @@ public class Gff3HandlerService {
         }
     }
 
-    public void writeFasta(WriteObject writeObject, Collection<? extends Feature> features) {
+    void writeFasta(WriteObject writeObject, Collection<? extends Feature> features) {
         writeEmptyFastaDirective(writeObject.out);
         for (Feature feature : features) {
             writeFasta(writeObject.out, feature, false);
         }
     }
 
-    public void writeFasta(PrintWriter out, Feature feature) {
+    void writeFasta(PrintWriter out, Feature feature) {
         writeFasta(out, feature, true);
     }
 
-    public void writeFasta(PrintWriter out, Feature feature, boolean writeFastaDirective) {
+    void writeFasta(PrintWriter out, Feature feature, boolean writeFastaDirective) {
         writeFasta(out, feature, writeFastaDirective, true);
     }
 
-    public void writeFasta(PrintWriter out, Feature feature, boolean writeFastaDirective, boolean useLocation) {
+    void writeFasta(PrintWriter out, Feature feature, boolean writeFastaDirective, boolean useLocation) {
         int lineLength = 60;
         if (writeFastaDirective) {
             writeEmptyFastaDirective(out);
@@ -154,13 +161,13 @@ public class Gff3HandlerService {
         }
     }
     
-    public void writeFastaForReferenceSequences(WriteObject writeObject, Collection<Sequence> sequences) {
+    void writeFastaForReferenceSequences(WriteObject writeObject, Collection<Sequence> sequences) {
         for (Sequence sequence : sequences) {
             writeFastaForReferenceSequence(writeObject, sequence)
         }
     }
     
-    public void writeFastaForReferenceSequence(WriteObject writeObject, Sequence sequence) {
+    void writeFastaForReferenceSequence(WriteObject writeObject, Sequence sequence) {
         int lineLength = 60;
         String residues = null
         writeEmptyFastaDirective(writeObject.out);
@@ -175,7 +182,7 @@ public class Gff3HandlerService {
         }
     }
     
-    public void writeFastaForSequenceAlterations(WriteObject writeObject, Collection<? extends Feature> features) {
+    void writeFastaForSequenceAlterations(WriteObject writeObject, Collection<? extends Feature> features) {
         for (Feature feature : features) {
             if (feature instanceof SequenceAlterationArtifact) {
                 writeFastaForSequenceAlteration(writeObject, feature)
@@ -183,7 +190,7 @@ public class Gff3HandlerService {
         }
     }
     
-    public void writeFastaForSequenceAlteration(WriteObject writeObject, SequenceAlterationArtifact sequenceAlteration) {
+    void writeFastaForSequenceAlteration(WriteObject writeObject, SequenceAlterationArtifact sequenceAlteration) {
         int lineLength = 60;
         String residues = null
         residues = sequenceAlteration.getAlterationResidue()
@@ -292,13 +299,13 @@ public class Gff3HandlerService {
         }
         if(configWrapperService.exportSubFeatureAttrs() || feature.class.name in requestHandlingService.viewableAnnotationList+requestHandlingService.viewableAnnotationTranscriptList+requestHandlingService.viewableAlterations) {
             if (writeObject.attributesToExport.contains(FeatureStringEnum.SYNONYMS.value)) {
-                Iterator<Synonym> synonymIter = feature.synonyms.iterator();
+                Iterator<FeatureSynonym> synonymIter = feature.featureSynonyms.iterator();
                 if (synonymIter.hasNext()) {
                     StringBuilder synonyms = new StringBuilder();
-                    synonyms.append(synonymIter.next().getName());
+                    synonyms.append(synonymIter.next().synonym.name);
                     while (synonymIter.hasNext()) {
                         synonyms.append(",");
-                        synonyms.append(encodeString(synonymIter.next().getName()));
+                        synonyms.append(encodeString(synonymIter.next().synonym.name));
                     }
                     attributes.put(FeatureStringEnum.EXPORT_ALIAS.value, synonyms.toString());
                 }
@@ -334,8 +341,19 @@ public class Gff3HandlerService {
                 }
             }
             if (writeObject.attributesToExport.contains(FeatureStringEnum.DESCRIPTION.value) && feature.getDescription() != null && !isBlank(feature.getDescription())) {
-
                 attributes.put(FeatureStringEnum.DESCRIPTION.value, encodeString(feature.getDescription()));
+            }
+            if (writeObject.attributesToExport.contains(FeatureStringEnum.GO_ANNOTATIONS.value) && feature.goAnnotations ) {
+                String productString  =  goAnnotationService.convertGoAnnotationsToGff3String(feature.goAnnotations)
+                attributes.put(FeatureStringEnum.GO_ANNOTATIONS.value, encodeString(productString))
+            }
+            if (writeObject.attributesToExport.contains(FeatureStringEnum.PROVENANCE.value) && feature.provenances ) {
+                String productString  = provenanceService.convertProvenancesToGff3String(feature.provenances)
+                attributes.put(FeatureStringEnum.PROVENANCE.value, encodeString(productString))
+            }
+            if (writeObject.attributesToExport.contains(FeatureStringEnum.GENE_PRODUCT.value) && feature.geneProducts) {
+                String productString  = geneProductService.convertGeneProductsToGff3String(feature.geneProducts)
+                attributes.put(FeatureStringEnum.GENE_PRODUCT.value, encodeString(productString))
             }
             if (writeObject.attributesToExport.contains(FeatureStringEnum.STATUS.value) && feature.getStatus() != null) {
                 attributes.put(FeatureStringEnum.STATUS.value, encodeString(feature.getStatus().value));
@@ -418,23 +436,18 @@ public class Gff3HandlerService {
     }
 
 
-    public enum Mode {
+    enum Mode {
         READ,
         WRITE
     }
 
-    public enum Format {
+    enum Format {
         TEXT,
         GZIP
     }
     
     private boolean isBlank(String attributeValue) {
-        if (attributeValue == "") {
-            return true
-        }
-        else {
-            return false
-        }
+        return attributeValue == ""
     }
 
     private class WriteObject {

@@ -81,8 +81,8 @@ function check_node(){
         NODE_VERSION=${NODE_VERSION:1}
     fi
     echo "Node Version: $NODE_VERSION"
-    if [[ ${NODE_VERSION} -lt 6 ]] || [[ ${NODE_VERSION} -gt 12 ]]; then
-        echo "node version 6 to 12 must be installed.  Please install an updated version of node.js by following the instructions appropriate for your system https://nodejs.org/en/download/package-manager/";
+    if [[ ${NODE_VERSION} -lt 6 ]] || [[ ${NODE_VERSION} -gt 13 ]]; then
+        echo "node version 6 to 13 must be installed.  Please install an updated version of node.js by following the instructions appropriate for your system https://nodejs.org/en/download/package-manager/";
         exit 1
     fi
 
@@ -163,7 +163,7 @@ function check_configs(){
        GRADLE_MAJOR_VERSION=`$gradle_executable  -v | grep Gradle | cut -f2 -d' ' | cut -f1 -d.`;
        echo "Gradle version: ${GRADLE_MAJOR_VERSION}"
        if [[ $GRADLE_MAJOR_VERSION -gt 3  || $GRADLE_MAJOR_VERSION -lt 2 ]];then
-           echo "Gradle version ${GRADLE_MAJOR_VERSION} not supported.  ONly 2 or 3 supported so using local ./gradlew instead"
+           echo "Gradle version ${GRADLE_MAJOR_VERSION} not supported.  Only gradle 2 or 3 supported so using local ./gradlew instead"
            use_gradlew
        else
            echo "Using system gradle `$gradle_executable  -v | grep Gradle | cut -f2 -d' '`";

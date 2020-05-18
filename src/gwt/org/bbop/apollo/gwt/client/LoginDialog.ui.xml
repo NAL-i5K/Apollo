@@ -50,6 +50,10 @@ Unauthorized or improper use of this system may result in disciplinary action, a
       <b:Anchor text="Browse public genomes" href="../jbrowse/"/>
     </b:Row>
 
+      <b:Row styleName="{style.spacer}">
+          <b:Anchor text="About Apollo" href="../about/" target="_blank"/>
+      </b:Row>
+
     <b:Row styleName="{style.spacer}">
       <b:Column size="MD_1"><b:html.Div ui:field="errorHtml"/></b:Column>
       <b:Column size="MD_9"><b:html.Paragraph ui:field="errorText"/></b:Column>

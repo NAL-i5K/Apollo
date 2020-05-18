@@ -109,6 +109,7 @@ environments {
 //    gff3.source = "MyOrg" // also for GPAD export
 //    only_owners_delete = true
 //    common_data_directory = "/opt/temporary/apollo"
+//    count_annotations = false
 //    store_orig_id = false
 //    fa_to_twobit_exe = "/usr/local/bin/faToTwoBit" // get from // https://genome.ucsc.edu/goldenPath/help/blatSpec.html
 //    sequence_search_tools {
@@ -129,17 +130,10 @@ environments {
 //    extraTabs = [
 //            ['title': 'extra1', 'url': 'http://localhost:8080/apollo/annotator/report/'],
 //            ['title': 'extra2', 'content': '<b>Apollo</b> documentation <a href="http://genomearchitect.org" target="_blank">linked here</a>']
+//            ['title': 'GGA', 'url': 'https://gitter.im/galaxy-genome-annotation/Lobby/~embed']
+//            ['title': 'JBrowse', 'url': 'https://gitter.im/GMOD/jbrowse/~embed']
 //    ]
 //
-////    extraTabs = [
-////        tab1: [
-////            title : 'extra1',
-////            url : 'http://localhost:8080/apollo/annotator/report/'
-////        ],
-////        tab2: ['title': 'extra2',
-////               'content': '<b>Some content</b><a href="http://google.com" target="_blank">Google</a>'
-////        ]
-////    ]
 //}
 
 // Uncomment to change the default memory configurations

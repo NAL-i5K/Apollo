@@ -55,13 +55,13 @@
                     <b:Column size="MD_4">
                         <b:TextBox placeholder="Search" ui:field="nameSearchBox"/>
                     </b:Column>
+                    <b:Column size="MD_4">
+                        <b:TextBox ui:field="createGroupField" visible="false" placeholder="New Group Name"/>
+                    </b:Column>
                     <b:Column size="MD_3">
                         <b:Button ui:field="createButton" icon="PLUS">Add Group</b:Button>
                         <b:Button ui:field="saveButton" icon="SAVE" visible="false" type="PRIMARY">Save</b:Button>
                         <b:Button ui:field="cancelButton" visible="false">Cancel</b:Button>
-                    </b:Column>
-                    <b:Column size="MD_4">
-                        <b:TextBox ui:field="createGroupField" visible="false"/>
                     </b:Column>
                     <!--<b:Column size="MD_1" styleName="{style.widgetPanel}">-->
                     <!--</b:Column>-->
@@ -123,12 +123,12 @@
                     <gwt:header>Users</gwt:header>
                     <b:Container fluid="true" width="100%">
                         <b:Row>
-                           <!-- <b:Column size="MD_6">
-                                <gwt:HTML styleName="{style.tableKeyName}" text="Available users"/>
-                            </b:Column>
-                            <b:Column size="MD_2">
-                                <gwt:HTML styleName="{style.tableKeyName}" text="Role"/>
-                            </b:Column>-->
+                            <!-- <b:Column size="MD_6">
+                                 <gwt:HTML styleName="{style.tableKeyName}" text="Available users"/>
+                             </b:Column>
+                             <b:Column size="MD_2">
+                                 <gwt:HTML styleName="{style.tableKeyName}" text="Role"/>
+                             </b:Column>-->
                             <b:Column size="MD_8">
                                 <select:MultipleSelect width="100%" title="Membership"  selectedTextFormat="COUNT"
                                                        countSelectedTextFormat="2"
@@ -136,8 +136,8 @@
                                                        liveSearch="true">
                                 </select:MultipleSelect>
                                 <!--<select:Select width="100%" title="Membership" multiple="true"-->
-                                               <!--selectedTextFormat="count > 2" visibleSize="5" ui:field="availableUsers"-->
-                                               <!--liveSearch="true">-->
+                                <!--selectedTextFormat="count > 2" visibleSize="5" ui:field="availableUsers"-->
+                                <!--liveSearch="true">-->
                                 <!--</select:Select>-->
                             </b:Column>
                             <!--<b:Column size="MD_2">

@@ -21,6 +21,9 @@ public enum FeatureStringEnum {
         TIMEACCESSION,
         DEFAULT,
         TIMELASTMODIFIED,
+        NOT,
+        NO_STATUS_ASSIGNED,
+        ANY_STATUS_ASSIGNED,
         RESIDUES,
         CHILDREN,
         CDS("CDS"),
@@ -104,6 +107,9 @@ public enum FeatureStringEnum {
         ATTRIBUTES,
         PUBMEDIDS("pubmed_ids"),
         GOIDS("go_ids"),
+        GENE_PRODUCT,
+        PROVENANCE,
+        DB_XREF,
         SYNONYMS,
         STRUCTURAL_EDIT,
         HIGHLIGHTED_REGION("highlighted region"),
@@ -173,7 +179,6 @@ public enum FeatureStringEnum {
         NEW_ALTERNATE_ALLELES,
         ALLELE_FREQUENCY("allele_frequency"),
         ALLELE_FREQUENCY_TAG("AF"),
-        PROVENANCE,
         ALLELE,
         ALLELE_INFO,
         NEW_ALLELE_INFO,
@@ -202,6 +207,11 @@ public enum FeatureStringEnum {
 
         public String getValue() {
                 return value;
+        }
+
+        public String getPretty() {
+                String pretty1 = value.replaceAll("_"," ");
+                return pretty1.substring(0,1).toUpperCase() + pretty1.substring(1);
         }
 
 }

@@ -53,7 +53,7 @@ public class AlleleInfoPanel extends Composite {
 
     private DataGrid.Resources tablecss = GWT.create(TableResources.TableCss.class);
     @UiField(provided = true)
-    DataGrid<AllelePropertyInfo> dataGrid = new DataGrid<>(10, tablecss);
+    DataGrid<AllelePropertyInfo> dataGrid = new DataGrid<>(100, tablecss);
 
     private static ListDataProvider<AllelePropertyInfo> dataProvider = new ListDataProvider<>();
     private static List<AllelePropertyInfo> allelePropertyInfoList = dataProvider.getList();
@@ -301,10 +301,10 @@ public class AlleleInfoPanel extends Composite {
         boolean tagValidated = false;
         boolean valueValidated = false;
 
-        if (this.tag != null && !this.tag.isEmpty()) {
+        if (tag != null && !tag.isEmpty()) {
             tagValidated = true;
         }
-        if (this.value != null && !this.value.isEmpty()) {
+        if (value != null && !value.isEmpty()) {
             valueValidated = true;
         }
 

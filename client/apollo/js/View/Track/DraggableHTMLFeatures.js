@@ -1207,6 +1207,7 @@ var draggableTrack = declare( HTMLFeatureTrack,
 
     _makeFeatureContextMenu: function( featDiv, menuTemplate ) {
         var atrack = this.webapollo.getAnnotTrack();
+        var sourcetrack = this ;
 
         var menu = this.inherited(arguments);
         menu.addChild(new dijitMenuSeparator());
@@ -1223,50 +1224,181 @@ var draggableTrack = declare( HTMLFeatureTrack,
                 atrack.createAnnotations(selection,true);
             })
         }));
-        createAnnotationMenu.addChild(new dijitMenuItem( {
+
+        var pseudoGeneAnnotationMenu = new dijitMenu();
+        pseudoGeneAnnotationMenu.addChild(new dijitMenuItem( {
             label: "pseudogene",
             onClick: dojo.hitch(this, function() {
                 atrack.createGenericAnnotations(this._handleSelectedFeatures(), "transcript", null, "pseudogene");
             })
         }));
-        createAnnotationMenu.addChild(new dijitMenuItem( {
-            label: "tRNA",
+        pseudoGeneAnnotationMenu.addChild(new dijitMenuItem( {
+            label: "pseudogenic region",
             onClick: dojo.hitch(this, function() {
-                atrack.createGenericAnnotations(this._handleSelectedFeatures(), "tRNA", null, "gene");
+                atrack.createGenericAnnotations(this._handleSelectedFeatures(), "transcript", null, "pseudogenic_region");
             })
         }));
-        createAnnotationMenu.addChild(new dijitMenuItem( {
-            label: "snRNA",
+        pseudoGeneAnnotationMenu.addChild(new dijitMenuItem( {
+            label: "processed pseudogene",
             onClick: dojo.hitch(this, function() {
-                atrack.createGenericAnnotations(this._handleSelectedFeatures(), "snRNA", null, "gene");
+                atrack.createGenericAnnotations(this._handleSelectedFeatures(), "transcript", null, "processed_pseudogene");
             })
         }));
-        createAnnotationMenu.addChild(new dijitMenuItem( {
-            label: "snoRNA",
-            onClick: dojo.hitch(this, function() {
-                atrack.createGenericAnnotations(this._handleSelectedFeatures(), "snoRNA", null, "gene");
+
+        var pseudoGeneAnnotationMenuItem = new dijitPopupMenuItem({
+            label: "Pseudogenes",
+            popup: pseudoGeneAnnotationMenu,
+        });
+        createAnnotationMenu.addChild(pseudoGeneAnnotationMenuItem)
+
+
+        var nonCodingRnaAnnotationMenu = new dijitMenu();
+
+        nonCodingRnaAnnotationMenu.addChild(
+            new dijitMenuItem( {
+                label: 'tRNA',
+                onClick: dojo.hitch(this, function() {
+                    atrack.createGenericAnnotations(this._handleSelectedFeatures(), 'tRNA', null, "gene");
             })
         }));
+
+        nonCodingRnaAnnotationMenu.addChild(
+            new dijitMenuItem( {
+                label: 'snRNA',
+                onClick: dojo.hitch(this, function() {
+                    atrack.createGenericAnnotations(this._handleSelectedFeatures(), 'snRNA', null, "gene");
+                })
+            }));
+
+        nonCodingRnaAnnotationMenu.addChild(
+            new dijitMenuItem( {
+                label: 'snoRNA',
+                onClick: dojo.hitch(this, function() {
+                    atrack.createGenericAnnotations(this._handleSelectedFeatures(), 'snoRNA', null, "gene");
+                })
+            }));
+
+        nonCodingRnaAnnotationMenu.addChild(
+            new dijitMenuItem( {
+                label: 'ncRNA',
+                onClick: dojo.hitch(this, function() {
+                    atrack.createGenericAnnotations(this._handleSelectedFeatures(), 'ncRNA', null, "gene");
+                })
+            }));
+
+        nonCodingRnaAnnotationMenu.addChild(
+            new dijitMenuItem( {
+                label: 'rRNA',
+                onClick: dojo.hitch(this, function() {
+                    atrack.createGenericAnnotations(this._handleSelectedFeatures(), 'rRNA', null, "gene");
+                })
+            }));
+
+        nonCodingRnaAnnotationMenu.addChild(
+            new dijitMenuItem( {
+                label: 'mRNA',
+                onClick: dojo.hitch(this, function() {
+                    atrack.createGenericAnnotations(this._handleSelectedFeatures(), 'mRNA', null, "gene");
+                })
+            }));
+        nonCodingRnaAnnotationMenu.addChild(
+            new dijitMenuItem( {
+                label: 'miRNA',
+                onClick: dojo.hitch(this, function() {
+                    atrack.createGenericAnnotations(this._handleSelectedFeatures(), 'miRNA', null, "gene");
+                })
+            }));
+
+        nonCodingRnaAnnotationMenu.addChild(
+            new dijitMenuItem( {
+                label: 'Guide RNA',
+                onClick: dojo.hitch(this, function() {
+                    atrack.createGenericAnnotations(this._handleSelectedFeatures(), 'guide_RNA', null, "gene");
+                })
+            }));
+
+        nonCodingRnaAnnotationMenu.addChild(
+            new dijitMenuItem( {
+                label: 'RNase P RNA',
+                onClick: dojo.hitch(this, function() {
+                    atrack.createGenericAnnotations(this._handleSelectedFeatures(), 'RNase_P_RNA', null, "gene");
+                })
+            }));
+
+        nonCodingRnaAnnotationMenu.addChild(
+            new dijitMenuItem( {
+                label: 'telomerase RNA',
+                onClick: dojo.hitch(this, function() {
+                    atrack.createGenericAnnotations(this._handleSelectedFeatures(), 'telomerase_RNA', null, "gene");
+                })
+            }));
+
+        nonCodingRnaAnnotationMenu.addChild(
+            new dijitMenuItem( {
+                label: 'SRP RNA',
+                onClick: dojo.hitch(this, function() {
+                    atrack.createGenericAnnotations(this._handleSelectedFeatures(), 'SRP_RNA', null, "gene");
+                })
+            }));
+
+        nonCodingRnaAnnotationMenu.addChild(
+            new dijitMenuItem( {
+                label: 'lnc RNA',
+                onClick: dojo.hitch(this, function() {
+                    atrack.createGenericAnnotations(this._handleSelectedFeatures(), 'lnc_RNA', null, "gene");
+                })
+            }));
+
+        nonCodingRnaAnnotationMenu.addChild(
+            new dijitMenuItem( {
+                label: 'RNase MRP RNA',
+                onClick: dojo.hitch(this, function() {
+                    atrack.createGenericAnnotations(this._handleSelectedFeatures(), 'RNase_MRP_RNA', null, "gene");
+                })
+            }));
+
+        nonCodingRnaAnnotationMenu.addChild(
+            new dijitMenuItem( {
+                label: 'scRNA',
+                onClick: dojo.hitch(this, function() {
+                    atrack.createGenericAnnotations(this._handleSelectedFeatures(), 'scRNA', null, "gene");
+                })
+            }));
+
+        nonCodingRnaAnnotationMenu.addChild(
+            new dijitMenuItem( {
+                label: 'piRNA',
+                onClick: dojo.hitch(this, function() {
+                    atrack.createGenericAnnotations(this._handleSelectedFeatures(), 'piRNA', null, "gene");
+                })
+            }));
+
+        nonCodingRnaAnnotationMenu.addChild(
+            new dijitMenuItem( {
+                label: 'tmRNA',
+                onClick: dojo.hitch(this, function() {
+                    atrack.createGenericAnnotations(this._handleSelectedFeatures(), 'tmRNA', null, "gene");
+                })
+            }));
+
+        nonCodingRnaAnnotationMenu.addChild(
+            new dijitMenuItem( {
+                label: 'enzymatic RNA',
+                onClick: dojo.hitch(this, function() {
+                    atrack.createGenericAnnotations(this._handleSelectedFeatures(), 'enzymatic_RNA', null, "gene");
+                })
+            }));
+
+
+        var nonCodingRnaAnnotationMenuItem = new dijitPopupMenuItem({
+            label: "Non-coding RNA",
+            popup: nonCodingRnaAnnotationMenu,
+        });
+        createAnnotationMenu.addChild(nonCodingRnaAnnotationMenuItem)
+
+
         createAnnotationMenu.addChild(new dijitMenuItem( {
-            label: "ncRNA",
-            onClick: dojo.hitch(this, function() {
-                atrack.createGenericAnnotations(this._handleSelectedFeatures(), "ncRNA", null, "gene");
-            })
-        }));
-        createAnnotationMenu.addChild(new dijitMenuItem( {
-            label: "rRNA",
-            onClick: dojo.hitch(this, function() {
-                atrack.createGenericAnnotations(this._handleSelectedFeatures(), "rRNA", null, "gene");
-            })
-        }));
-        createAnnotationMenu.addChild(new dijitMenuItem( {
-            label: "miRNA",
-            onClick: dojo.hitch(this, function() {
-                atrack.createGenericAnnotations(this._handleSelectedFeatures(), "miRNA", null, "gene");
-            })
-        }));
-        createAnnotationMenu.addChild(new dijitMenuItem( {
-            label: "repeat_region",
+            label: "repeat region",
             onClick: dojo.hitch(this, function() {
                 atrack.createGenericOneLevelAnnotations(this._handleSelectedFeatures(), "repeat_region", true);
             })
@@ -1278,11 +1410,14 @@ var draggableTrack = declare( HTMLFeatureTrack,
             })
         }));
         createAnnotationMenu.addChild(new dijitMenuItem( {
-            label: "transposable_element",
+            label: "transposable element",
             onClick: dojo.hitch(this, function() {
                 atrack.createGenericOneLevelAnnotations(this._handleSelectedFeatures(), "transposable_element", true);
             })
         }));
+
+
+
 
         var createAnnotationMenuItem = new dijitPopupMenuItem( {
             label: "Create new annotation",

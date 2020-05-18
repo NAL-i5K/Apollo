@@ -19,7 +19,9 @@ JSONUtils.MANUALLY_DISSOCIATE_TRANSCRIPT_FROM_GENE = "Manually dissociate transc
 JSONUtils.MANUALLY_ASSOCIATE_FEATURE_TO_GENE = "Manually associate feature to gene";
 JSONUtils.MANUALLY_DISSOCIATE_FEATURE_FROM_GENE = "Manually dissociate feature from gene";
 
-/**
+
+
+           /**
 *  creates a feature in JBrowse JSON format
 *  takes as arguments:
 *      afeature: feature in ApolloEditorService JSON format,
@@ -167,7 +169,7 @@ JSONUtils.makeSimpleFeature = function(feature, parent)  {
     var ftags = feature.tags();
     for (var tindex = 0; tindex < ftags.length; tindex++)  {
         var tag = ftags[tindex];
-        // forcing lower case, since still having case issues with NCList features
+    // forcing lower case, since still having case issues with NCList features
         result.set(tag.toLowerCase(), feature.get(tag.toLowerCase()));
     }
     var subfeats = feature.get('subfeatures');
@@ -310,17 +312,39 @@ JSONUtils.getPreferredSubFeature = function(type,test_feature){
     if (JSONUtils.verbose_conversion)  {
         console.log('parent type',type,'subfeature type',test_feature.get('type'))
     }
-    if(  (type==='mRNA' && test_feature.get('type')==='gene')
-        || (type.endsWith('RNA') && test_feature.get('type').endsWith('gene') )
-        || (type.endsWith('transcript') && test_feature.get('type').endsWith('gene') )
-    ){
-        var subfeatures = test_feature.get('subfeatures');
-        if(subfeatures && subfeatures.length===1){
-            return subfeatures[0];
+    if(test_feature.get('type')){
+        if(  (type==='mRNA' && test_feature.get('type')==='gene')
+            || (type.endsWith('RNA') && test_feature.get('type').endsWith('gene') )
+            || (type.endsWith('transcript') && test_feature.get('type').endsWith('gene') )
+        ){
+            var subfeatures = test_feature.get('subfeatures');
+            if(subfeatures && subfeatures.length===1){
+                return subfeatures[0];
+            }
         }
     }
     return null ;
 };
+
+function copyOfficialData(fromFeature,toFeature){
+    for(var key of Object.keys(fromFeature.data)) {
+        // var key = fromFeature.data[keyIndex];
+        // toFeature[key] = fromFeature.data[key];
+        if (key.toLowerCase() === 'note' || key.toLowerCase() === 'description') {
+            toFeature['description'] = fromFeature.data[key];
+        }
+        // else{
+        //     toFeature[key] = fromFeature.data[key];
+        // }
+        // this is set for the output GFF3
+        // if(key === 'source'){
+        //     toFeature['source'] = fromFeature.data[key];
+        // }
+    }
+
+
+    return toFeature;
+}
 
 /**
 *  creates a feature in ApolloEditorService JSON format
@@ -350,13 +374,13 @@ JSONUtils.getPreferredSubFeature = function(type,test_feature){
 *    ignoring JBrowse ID / name fields for now
 *    currently, for features with lazy-loaded children, ignores children
 */
-JSONUtils.createApolloFeature = function( jfeature, specified_type, useName, specified_subtype )   {
+JSONUtils.createApolloFeature = function( jfeature, specified_type, useName, specified_subtype ,is_official)   {
+    var official = is_official === undefined ? false : is_official;
     var diagnose =  (JSONUtils.verbose_conversion && jfeature.children() && jfeature.children().length > 0);
     if (diagnose)  {
         console.log("converting JBrowse feature to Apollo feture, specified type: " + specified_type + " " + specified_subtype);
-        console.log(jfeature);
+        console.log(jfeature,JSON.stringify(jfeature));
     }
-
 
     var afeature = {};
     var astrand;
@@ -384,7 +408,7 @@ JSONUtils.createApolloFeature = function( jfeature, specified_type, useName, spe
         typename = specified_type;
         var preferredSubFeature = this.getPreferredSubFeature(specified_type,jfeature);
         if(preferredSubFeature){
-            return this.createApolloFeature(preferredSubFeature,specified_type,useName,specified_subtype)
+            return this.createApolloFeature(preferredSubFeature,specified_type,useName,specified_subtype,official)
         }
     }
     else
@@ -414,18 +438,23 @@ JSONUtils.createApolloFeature = function( jfeature, specified_type, useName, spe
     }
     afeature.orig_id = id ;
 
-    /*
-    afeature.properties = [];
-    var property = { value : "source_id=" + jfeature.get('id'),
-            type : {
-                    cv: {
-                        name: "feature_property"
-                    },
-                    name: "feature_property"
-            }
-    };
-    afeature.properties.push(property);
-    */
+    // add all other properties if there
+  if(official){
+      copyOfficialData(jfeature,afeature);
+  }
+
+  /*
+  afeature.properties = [];
+  var property = { value : "source_id=" + jfeature.get('id'),
+          type : {
+                  cv: {
+                      name: "feature_property"
+                  },
+                  name: "feature_property"
+          }
+  };
+  afeature.properties.push(property);
+  */
 
     if (diagnose) { console.log("converting to Apollo feature: " + typename); }
     var subfeats;
@@ -512,7 +541,7 @@ JSONUtils.createApolloFeature = function( jfeature, specified_type, useName, spe
                     foundExons = true;
                 }
                 if (converted_subtype)  {
-                afeature.children.push( JSONUtils.createApolloFeature( subfeat, converted_subtype ) );
+                afeature.children.push( JSONUtils.createApolloFeature( subfeat, converted_subtype , official) );
                     if (diagnose)  { console.log("    subfeat original type: " + subtype + ", converted type: " + converted_subtype); }
                 }
                 else {
@@ -520,10 +549,10 @@ JSONUtils.createApolloFeature = function( jfeature, specified_type, useName, spe
                 }
         }
         if (cds) {
-            afeature.children.push( JSONUtils.createApolloFeature( cds, "CDS"));
+            afeature.children.push( JSONUtils.createApolloFeature( cds, "CDS",official));
             if (!foundExons) {
                 for (var i = 0; i < cdsFeatures.length; ++i) {
-                    afeature.children.push(JSONUtils.createApolloFeature(cdsFeatures[i], "exon"));
+                    afeature.children.push(JSONUtils.createApolloFeature(cdsFeatures[i], "exon",official));
                 }
             }
         }
@@ -537,7 +566,7 @@ JSONUtils.createApolloFeature = function( jfeature, specified_type, useName, spe
         fake_exon.set('end', jfeature.get('end'));
         fake_exon.set('strand', jfeature.get('strand'));
         fake_exon.set('type', 'exon');
-        afeature.children = [ JSONUtils.createApolloFeature( fake_exon ) ];
+        afeature.children = [ JSONUtils.createApolloFeature( fake_exon , undefined,official) ];
     }
     if (diagnose)  { console.log("result:"); console.log(afeature); }
     return afeature;
@@ -676,7 +705,6 @@ JSONUtils.createApolloVariant = function( feat, useName ) {
     }
 
     afeature.variant_info = metadata;
-    console.log("created Apollo feature: ", afeature);
     return afeature;
 };
 
@@ -710,7 +738,6 @@ JSONUtils.classifyVariant = function( refAllele, altAlleles, fmin, fmax ) {
             type = "deletion"
         }
     }
-    console.log("variant type inferred: ", type);
     return type;
 };
 

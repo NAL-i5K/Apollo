@@ -161,7 +161,6 @@ public class SearchPanel extends Composite {
           RequestCallback requestCallback = new RequestCallback() {
             @Override
             public void onResponseReceived(Request request, Response response) {
-              GWT.log(response.getText());
               try {
                 JSONValue jsonValue = JSONParser.parseStrict(response.getText());
                 JSONArray features = jsonValue.isObject().get(FeatureStringEnum.FEATURES.getValue()).isArray();
@@ -170,7 +169,7 @@ public class SearchPanel extends Composite {
                   @Override
                   public void callback(boolean result) {
                     if(result){
-                      MainPanel.viewInAnnotationPanel(parentName);
+                      MainPanel.viewInAnnotationPanel(parentName,null);
                     }
                   }
                 });

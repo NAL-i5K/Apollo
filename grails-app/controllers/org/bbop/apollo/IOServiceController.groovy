@@ -74,7 +74,7 @@ class IOServiceController extends AbstractApolloController {
         try {
             long current = System.currentTimeMillis()
             JSONObject dataObject = permissionService.handleInput(request, params)
-            if (!permissionService.hasPermissions(dataObject, PermissionEnum.READ)) {
+            if (!permissionService.hasPermissions(dataObject, PermissionEnum.EXPORT)) {
                 render status: HttpStatus.UNAUTHORIZED
                 return
             }
@@ -102,7 +102,7 @@ class IOServiceController extends AbstractApolloController {
 
             def st = System.currentTimeMillis()
             def queryParams = [organism: organism]
-            def features = []
+            def features
 
             if (exportAllSequences) {
                 sequences = []
@@ -127,11 +127,17 @@ class IOServiceController extends AbstractApolloController {
 
                 log.debug "IOService query: ${System.currentTimeMillis() - st}ms"
             } else {
-                queryParams['viewableAnnotationList'] = requestHandlingService.viewableAnnotationList
+                queryParams['viewableAnnotationList'] = requestHandlingService.nonCodingAnnotationTranscriptList
+                // request nonCoding transcripts that can lack an exon
+                def genesNoExon = Gene.executeQuery("select distinct f from Gene f join fetch f.featureLocations fl join fetch f.parentFeatureRelationships pr join fetch pr.childFeature child join fetch child.featureLocations where fl.sequence.organism = :organism and child.class in (:viewableAnnotationList)" + (sequences ? " and fl.sequence.name in (:sequences) " : ""),queryParams)
+                if(genesNoExon.id){
+                    queryParams['geneIds'] = genesNoExon.id
+                }
 
-                // caputures 3 level indirection, joins feature locations only. joining other things slows it down
-                def genes = Gene.executeQuery("select distinct f from Gene f join fetch f.featureLocations fl join fetch f.parentFeatureRelationships pr join fetch pr.childFeature child join fetch child.featureLocations join fetch child.childFeatureRelationships join fetch child.parentFeatureRelationships cpr join fetch cpr.childFeature subchild join fetch subchild.featureLocations join fetch subchild.childFeatureRelationships left join fetch subchild.parentFeatureRelationships where fl.sequence.organism = :organism and f.class in (:viewableAnnotationList)" + (sequences ? " and fl.sequence.name in (:sequences)" : ""), queryParams)
-                // captures rest of feats
+                // captures 3 level indirection, joins feature locations only. joining other things slows it down
+                queryParams['viewableAnnotationList'] = requestHandlingService.viewableAnnotationList
+                def genes = Gene.executeQuery("select distinct f from Gene f join fetch f.featureLocations fl join fetch f.parentFeatureRelationships pr join fetch pr.childFeature child join fetch child.featureLocations join fetch child.childFeatureRelationships join fetch child.parentFeatureRelationships cpr join fetch cpr.childFeature subchild join fetch subchild.featureLocations join fetch subchild.childFeatureRelationships left join fetch subchild.parentFeatureRelationships where fl.sequence.organism = :organism  ${genesNoExon.id ? " and f.id not in (:geneIds)": ""}  and f.class in (:viewableAnnotationList)" + (sequences ? " and fl.sequence.name in (:sequences)" : ""), queryParams)
+//                 captures rest of feats
                 def otherFeats = Feature.createCriteria().list() {
                     featureLocations {
                         sequence {
@@ -144,7 +150,7 @@ class IOServiceController extends AbstractApolloController {
                     'in'('class', requestHandlingService.viewableAlterations + requestHandlingService.viewableAnnotationFeatureList)
                 }
                 log.debug "${otherFeats}"
-                features = genes + otherFeats
+                features = genes + otherFeats + genesNoExon
 
                 log.debug "IOService query: ${System.currentTimeMillis() - st}ms"
             }

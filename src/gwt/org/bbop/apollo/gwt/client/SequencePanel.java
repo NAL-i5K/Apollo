@@ -20,6 +20,7 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.cellview.client.*;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
@@ -40,7 +41,6 @@ import org.gwtbootstrap3.client.ui.TextBox;
 import org.gwtbootstrap3.client.ui.constants.ButtonType;
 import org.gwtbootstrap3.extras.bootbox.client.Bootbox;
 import org.gwtbootstrap3.extras.bootbox.client.callback.ConfirmCallback;
-import org.gwtbootstrap3.extras.bootbox.client.callback.SimpleCallback;
 import org.gwtbootstrap3.extras.select.client.ui.MultipleSelect;
 import org.gwtbootstrap3.extras.select.client.ui.Option;
 
@@ -53,6 +53,7 @@ import java.util.Set;
  * Created by ndunn on 12/17/14.
  */
 public class SequencePanel extends Composite {
+
 
     interface SequencePanelUiBinder extends UiBinder<Widget, SequencePanel> {
     }
@@ -102,6 +103,8 @@ public class SequencePanel extends Composite {
     Button deleteSequencesButton;
     @UiField
     Button deleteVariantEffectsButton;
+    @UiField
+    CheckBox deleteOkayButton;
 
     private AsyncDataProvider<SequenceInfo> dataProvider;
     private MultiSelectionModel<SequenceInfo> multiSelectionModel = new MultiSelectionModel<SequenceInfo>();
@@ -109,6 +112,8 @@ public class SequencePanel extends Composite {
     private Integer selectedCount = 0;
     private Boolean exportAll = false;
     private Boolean chadoExportStatus = false;
+    private Boolean allowExport = false ;
+
 
     public SequencePanel() {
 
@@ -151,13 +156,14 @@ public class SequencePanel extends Composite {
             @Override
             public void onSelectionChange(SelectionChangeEvent event) {
                 Set<SequenceInfo> selectedSequenceInfo = multiSelectionModel.getSelectedSet();
+                if(!getAllowExport()) return;
                 if (selectedSequenceInfo.size() == 1) {
                     setSequenceInfo(selectedSequenceInfo.iterator().next());
                     selectSelectedButton.setEnabled(true);
                 } else {
                     setSequenceInfo(null);
                 }
-                if (selectedSequenceInfo.size() > 0) {
+                if (selectedSequenceInfo.size() > 0 && getAllowExport()) {
                     exportSelectedButton.setText("Selected (" + selectedSequenceInfo.size() + ")");
                     deleteSequencesButton.setText("Annotations on " + selectedSequenceInfo.size() + " seq");
                 } else {
@@ -237,7 +243,6 @@ public class SequencePanel extends Composite {
                             JSONObject sequenceInfoJson = JSONParser.parseStrict(response.getText()).isObject();
                             MainPanel mainPanel = MainPanel.getInstance();
                             SequenceInfo currentSequence = mainPanel.setCurrentSequenceAndEnds(SequenceInfoConverter.convertFromJson(sequenceInfoJson));
-                            mainPanel.sequenceSuggestBox.setText(currentSequence.getName());
                             Annotator.eventBus.fireEvent(new OrganismChangeEvent(OrganismChangeEvent.Action.LOADED_ORGANISMS, currentSequence.getName(), mainPanel.getCurrentOrganism().getName()));
                             MainPanel.updateGenomicViewerForLocation(currentSequence.getName(), currentSequence.getStartBp(), currentSequence.getEndBp(), true, false);
                         }
@@ -293,6 +298,7 @@ public class SequencePanel extends Composite {
                                 exportAllButton.setEnabled(allowExport);
                                 exportSelectedButton.setEnabled(allowExport);
                                 selectedSequenceDisplay.setEnabled(allowExport);
+                                setAllowExport(allowExport);
                                 break;
                         }
                     }
@@ -318,6 +324,7 @@ public class SequencePanel extends Composite {
     }
 
     private void updatedExportSelectedButton() {
+        if(!this.allowExport) return ;
         if (selectedCount > 0) {
             exportSelectedButton.setEnabled(true);
             exportSelectedButton.setText("Selected (" + multiSelectionModel.getSelectedSet().size() + ")");
@@ -460,7 +467,7 @@ public class SequencePanel extends Composite {
                     Bootbox.confirm("Variant Effects deleted from " + sequenceInfoSet.size() + " sequences.  Reload if effect not visible?", new ConfirmCallback() {
                         @Override
                         public void callback(boolean result) {
-                            if(result){
+                            if (result) {
                                 Window.Location.reload();
                             }
                         }
@@ -495,10 +502,12 @@ public class SequencePanel extends Composite {
                     final LoadingDialog loadingDialog = new LoadingDialog("Deleting Annotations ...", null, false);
                     JSONObject returnObject = AnnotationRestService.deleteAnnotationsFromSequences(requestCallback, sequenceInfoSet);
                     loadingDialog.hide();
-                    Bootbox.alert("Annotations deleted from " + sequenceInfoSet.size() + " sequences, reloading", new SimpleCallback() {
+                    Bootbox.confirm("Annotations deleted from " + sequenceInfoSet.size() + " sequences, reloading", new ConfirmCallback() {
                         @Override
-                        public void callback() {
-                            Window.Location.reload();
+                        public void callback(boolean result) {
+                            if (result) {
+                                Window.Location.reload();
+                            }
                         }
                     });
                 }
@@ -527,16 +536,24 @@ public class SequencePanel extends Composite {
         exportValues(new ArrayList<SequenceInfo>());
     }
 
+    private void checkEnableButtons(int size){
+        if(size==0 || !deleteOkayButton.getValue()){
+            deleteSequencesButton.setEnabled(false);
+            deleteVariantEffectsButton.setEnabled(false);
+        }
+        else{
+            deleteSequencesButton.setEnabled(true);
+            deleteVariantEffectsButton.setEnabled(true);
+        }
+
+    }
+
     public void updateSelectedSequenceDisplay(Set<SequenceInfo> selectedSequenceInfoList) {
         selectedSequenceDisplay.clear();
         if (selectedSequenceInfoList.size() == 0) {
             selectedSequenceDisplay.setEnabled(false);
-            deleteSequencesButton.setEnabled(false);
-            deleteVariantEffectsButton.setEnabled(false);
         } else {
             selectedSequenceDisplay.setEnabled(true);
-            deleteSequencesButton.setEnabled(true);
-            deleteVariantEffectsButton.setEnabled(true);
             for (SequenceInfo s : selectedSequenceInfoList) {
                 Option option = new Option();
                 option.setValue(s.getName());
@@ -544,12 +561,18 @@ public class SequencePanel extends Composite {
                 selectedSequenceDisplay.add(option);
             }
         }
+        checkEnableButtons(selectedSequenceInfoList.size());
         selectedSequenceDisplay.refresh();
     }
 
     @UiHandler("clearSelectionButton")
     public void clearSelection(ClickEvent clickEvent) {
         multiSelectionModel.clear();
+    }
+
+    @UiHandler("deleteOkayButton")
+    public void deleteOkayButtonClick(ClickEvent event) {
+        checkEnableButtons(multiSelectionModel.getSelectedSet().size());
     }
 
     public void reload() {
@@ -571,5 +594,13 @@ public class SequencePanel extends Composite {
     public void setChadoExportStatus(String exportStatus) {
         this.chadoExportStatus = exportStatus.equals("true");
         this.exportChadoButton.setEnabled(this.chadoExportStatus);
+    }
+
+    public void setAllowExport(boolean allowExport) {
+        this.allowExport = allowExport;
+    }
+
+    public boolean getAllowExport() {
+        return allowExport;
     }
 }

@@ -7,7 +7,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.http.client.*;
 import com.google.gwt.json.client.*;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -22,7 +21,6 @@ import org.bbop.apollo.gwt.client.event.AnnotationInfoChangeEvent;
 import org.bbop.apollo.gwt.client.event.AnnotationInfoChangeEventHandler;
 import org.bbop.apollo.gwt.client.event.OrganismChangeEvent;
 import org.bbop.apollo.gwt.client.event.UserChangeEvent;
-import org.bbop.apollo.gwt.client.oracles.ReferenceSequenceOracle;
 import org.bbop.apollo.gwt.client.rest.*;
 import org.bbop.apollo.gwt.shared.FeatureStringEnum;
 import org.bbop.apollo.gwt.shared.GlobalPermissionEnum;
@@ -30,7 +28,6 @@ import org.bbop.apollo.gwt.shared.PermissionEnum;
 import org.gwtbootstrap3.client.ui.*;
 import org.gwtbootstrap3.client.ui.Anchor;
 import org.gwtbootstrap3.client.ui.Button;
-import org.gwtbootstrap3.client.ui.SuggestBox;
 import org.gwtbootstrap3.client.ui.TextBox;
 import org.gwtbootstrap3.client.ui.constants.AlertType;
 import org.gwtbootstrap3.client.ui.constants.IconType;
@@ -48,9 +45,10 @@ public class MainPanel extends Composite {
 
 
     private static final int DEFAULT_TAB_COUNT = 8;
+    private static final int CLOSE_WIDTH = 25;
+    private static final int OPEN_WIDTH = 700;
 
-    interface MainPanelUiBinder extends UiBinder<Widget, MainPanel> {
-    }
+    interface MainPanelUiBinder extends UiBinder<Widget, MainPanel> { }
 
     private static MainPanelUiBinder ourUiBinder = GWT.create(MainPanelUiBinder.class);
 
@@ -67,19 +65,19 @@ public class MainPanel extends Composite {
     private static List<OrganismInfo> organismInfoList = new ArrayList<>(); // list of organisms for user
     private static final String trackListViewString = "&tracklist=";
     private static final String openAnnotatorPanelString = "&openAnnotatorPanel=";
-
+    private PermissionEnum highestPermissionForUser = PermissionEnum.NONE;
     private static boolean handlingNavEvent = false;
 
 
     private static MainPanel instance;
-    private final int maxUsernameLength = 15;
+    private final int MAX_USERNAME_LENGTH = 15;
     private static final double UPDATE_DIFFERENCE_BUFFER = 0.3;
     private static final double GENE_VIEW_BUFFER = 0.4;
     private static List<String> reservedList = new ArrayList<>();
 
 
     @UiField
-    Button dockOpenClose;
+    static Button dockOpenClose;
     @UiField(provided = false)
     static NamedFrame frame;
     @UiField
@@ -98,8 +96,8 @@ public class MainPanel extends Composite {
     static GroupPanel userGroupPanel;
     @UiField
     static DockLayoutPanel eastDockPanel;
-    @UiField(provided = true)
-    static SplitLayoutPanel mainSplitPanel;
+    @UiField
+    static SplitLayoutPanel mainDockPanel;
     @UiField
     static TabLayoutPanel detailTabs;
     @UiField
@@ -114,8 +112,6 @@ public class MainPanel extends Composite {
     Button generateLink;
     @UiField
     ListBox organismListBox;
-    @UiField(provided = true)
-    static SuggestBox sequenceSuggestBox;
     @UiField
     Modal notificationModal;
     @UiField
@@ -165,15 +161,6 @@ public class MainPanel extends Composite {
 
     MainPanel() {
         instance = this;
-        sequenceSuggestBox = new SuggestBox(new ReferenceSequenceOracle());
-
-        mainSplitPanel = new SplitLayoutPanel() {
-            @Override
-            public void onResize() {
-                super.onResize();
-                Annotator.setPreference(FeatureStringEnum.DOCK_WIDTH.getValue(), mainSplitPanel.getWidgetSize(eastDockPanel));
-            }
-        };
 
         exportStaticMethod();
 
@@ -201,13 +188,6 @@ public class MainPanel extends Composite {
             }
         });
 
-        sequenceSuggestBox.addSelectionHandler(new SelectionHandler<SuggestOracle.Suggestion>() {
-            @Override
-            public void onSelection(SelectionEvent<SuggestOracle.Suggestion> event) {
-                setCurrentSequence(sequenceSuggestBox.getText().trim(), null, null, true, false);
-            }
-        });
-
 
         try {
             String dockOpen = Annotator.getPreference(FeatureStringEnum.DOCK_OPEN.getValue());
@@ -226,7 +206,7 @@ public class MainPanel extends Composite {
             String dockWidth = Annotator.getPreference(FeatureStringEnum.DOCK_WIDTH.getValue());
             if (dockWidth != null && toggleOpen) {
                 Integer dockWidthInt = Integer.parseInt(dockWidth);
-                mainSplitPanel.setWidgetSize(eastDockPanel, dockWidthInt);
+                mainDockPanel.setWidgetSize(eastDockPanel, dockWidthInt);
             }
         } catch (NumberFormatException e) {
             GWT.log("Error setting preference: " + e.fillInStackTrace().toString());
@@ -366,7 +346,6 @@ public class MainPanel extends Composite {
                 } else {
                     currentEndBp = end;
                 }
-                sequenceSuggestBox.setText(currentSequence.getName());
 
                 Annotator.eventBus.fireEvent(new OrganismChangeEvent(OrganismChangeEvent.Action.LOADED_ORGANISMS, currentSequence.getName(), currentOrganism.getName()));
 
@@ -492,8 +471,7 @@ public class MainPanel extends Composite {
 
                         setUserNameForCurrentUser();
                     }
-
-
+                    annotatorPanel.initializeUsers();
                 } else {
                     boolean hasUsers = returnValue.get(FeatureStringEnum.HAS_USERS.getValue()).isBoolean().booleanValue();
                     if (hasUsers) {
@@ -526,8 +504,8 @@ public class MainPanel extends Composite {
     private void setUserNameForCurrentUser() {
         if (currentUser == null) return;
         String displayName = currentUser.getEmail();
-        userName.setText(displayName.length() > maxUsernameLength ?
-                displayName.substring(0, maxUsernameLength - 1) + "..." : displayName);
+        userName.setText(displayName.length() > MAX_USERNAME_LENGTH ?
+                displayName.substring(0, MAX_USERNAME_LENGTH - 1) + "..." : displayName);
     }
 
     public static void updateGenomicViewerForLocation(String selectedSequence, Integer minRegion, Integer maxRegion) {
@@ -565,7 +543,12 @@ public class MainPanel extends Composite {
         String trackListString = Annotator.getRootUrl();
         trackListString += Annotator.getClientToken() + "/";
         trackListString += "jbrowse/index.html?loc=";
-        trackListString += URL.encodeQueryString(selectedSequence+":") + minRegion + ".." + maxRegion;
+        if(MainPanel.currentQueryParams.containsKey("searchLocation")){
+            trackListString += MainPanel.currentQueryParams.get("searchLocation").get(0);
+        }
+        else{
+            trackListString += URL.encodeQueryString(selectedSequence+":") + minRegion + ".." + maxRegion;
+        }
 
         trackListString += getCurrentQueryParamsAsString();
 
@@ -696,11 +679,6 @@ public class MainPanel extends Composite {
         currentStartBp = appStateInfo.getCurrentStartBp();
         currentEndBp = appStateInfo.getCurrentEndBp();
 
-        if (currentSequence != null) {
-            sequenceSuggestBox.setText(currentSequence.getName());
-        }
-
-
         organismListBox.clear();
         for (OrganismInfo organismInfo : organismInfoList) {
             organismListBox.addItem(organismInfo.getName(), organismInfo.getId());
@@ -740,7 +718,6 @@ public class MainPanel extends Composite {
                 JSONValue j = JSONParser.parseStrict(response.getText());
                 JSONObject obj = j.isObject();
                 if (obj != null && obj.containsKey("error")) {
-//                    Bootbox.alert(obj.get("error").isString().stringValue());
                     loadingDialog.hide();
                 } else {
                     loadingDialog.hide();
@@ -878,24 +855,20 @@ public class MainPanel extends Composite {
         }
     }
 
-    private void closePanel() {
-        mainSplitPanel.setWidgetSize(eastDockPanel, 20);
-        dockOpenClose.setIcon(IconType.CHEVRON_LEFT);
+    static void closePanel() {
+        mainDockPanel.setWidgetSize(eastDockPanel, CLOSE_WIDTH);
+        dockOpenClose.setIcon(IconType.WINDOW_MAXIMIZE);
+        dockOpenClose.setColor("green");
     }
 
     private void openPanel() {
-        String dockWidth = Annotator.getPreference(FeatureStringEnum.DOCK_WIDTH.getValue());
-        if (dockWidth != null) {
-            Integer dockWidthInt = Integer.parseInt(dockWidth);
-            mainSplitPanel.setWidgetSize(eastDockPanel, dockWidthInt);
-        } else {
-            mainSplitPanel.setWidgetSize(eastDockPanel, 550);
-        }
-        dockOpenClose.setIcon(IconType.CHEVRON_RIGHT);
+      mainDockPanel.setWidgetSize(eastDockPanel, OPEN_WIDTH);
+      dockOpenClose.setIcon(IconType.CLOSE);
+      dockOpenClose.setColor("red");
     }
 
     private void toggleOpen() {
-        if (mainSplitPanel.getWidgetSize(eastDockPanel) < 100) {
+        if (mainDockPanel.getWidgetSize(eastDockPanel) < 100) {
             toggleOpen = false;
         }
 
@@ -905,7 +878,7 @@ public class MainPanel extends Composite {
             openPanel();
         }
 
-        mainSplitPanel.animate(400);
+        mainDockPanel.animate(0);
 
         toggleOpen = !toggleOpen;
         Annotator.setPreference(FeatureStringEnum.DOCK_OPEN.getValue(), toggleOpen);
@@ -1075,6 +1048,8 @@ public class MainPanel extends Composite {
      * @param payload
      */
     public static void handleFeatureUpdated(String payload) {
+//        GWT.log("updating feature with "+payload);
+        // not necessary now as they all come from the same panel
         if (detailTabs.getSelectedIndex() == 0) {
             annotatorPanel.reload();
         }
@@ -1106,17 +1081,34 @@ public class MainPanel extends Composite {
         return currentOrganism.toJSON().toString();
     }
 
+    public static boolean isOfficialTrack(String trackName){
+        String officialTracks = currentOrganism.getOfficialGeneSetTrack();
+        if(officialTracks==null) return false ;
+        for(String officialTrack : officialTracks.split(",")){
+            if(officialTrack.equals(trackName)) return true ;
+        }
+        return false ;
+    }
+
     /**
-     * Features array handed in
-     *
-     * @param parentName
      */
-    public static Boolean viewInAnnotationPanel(String parentName) {
+    public static Boolean viewInAnnotationPanel(String parentName,String childName) {
         try {
+            // ids are registered with clone for some reason in JSONUtils.js for RR and TE . . not sure if it will break other things, so correcting here
+            if(parentName.endsWith("-clone")){
+                parentName = parentName.substring(0,parentName.length()-6);
+            }
             annotatorPanel.sequenceList.setText("");
             annotatorPanel.nameSearchBox.setText(parentName);
+            annotatorPanel.uniqueNameCheckBox.setValue(true);
+            annotatorPanel.setSelectedChildUniqueName(childName);
             annotatorPanel.reload();
             detailTabs.selectTab(TabPanelIndex.ANNOTATIONS.getIndex());
+            MainPanel.getInstance().openPanel();
+            MainPanel.getInstance().addOpenTranscript(parentName);
+            if(childName!=null){
+                MainPanel.getInstance().selectOpenTranscript(childName);
+            }
             return true ;
         } catch (Exception e) {
             Bootbox.alert("Problem viewing annotation");
@@ -1125,8 +1117,13 @@ public class MainPanel extends Composite {
         }
     }
 
+    private void selectOpenTranscript(String childName) {
+        annotatorPanel.selectTranscriptPanel();
+        detailTabs.selectTab(TabPanelIndex.ANNOTATIONS.getIndex());
+    }
 
-  /**
+
+    /**
    * Features array handed in
    *
    * @param parentName
@@ -1201,7 +1198,9 @@ public class MainPanel extends Composite {
         $wnd.getCurrentOrganism = $entry(@org.bbop.apollo.gwt.client.MainPanel::getCurrentOrganismAsJson());
         $wnd.getCurrentUser = $entry(@org.bbop.apollo.gwt.client.MainPanel::getCurrentUserAsJson());
         $wnd.getCurrentSequence = $entry(@org.bbop.apollo.gwt.client.MainPanel::getCurrentSequenceAsJson());
-        $wnd.viewInAnnotationPanel = $entry(@org.bbop.apollo.gwt.client.MainPanel::viewInAnnotationPanel(Ljava/lang/String;));
+        $wnd.viewInAnnotationPanel = $entry(@org.bbop.apollo.gwt.client.MainPanel::viewInAnnotationPanel(Ljava/lang/String;Ljava/lang/String;));
+        $wnd.isOfficialTrack = $entry(@org.bbop.apollo.gwt.client.MainPanel::isOfficialTrack(Ljava/lang/String;));
+        $wnd.closeAnnotatorPanel = $entry(@org.bbop.apollo.gwt.client.MainPanel::closePanel());
         $wnd.viewGoPanel = $entry(@org.bbop.apollo.gwt.client.MainPanel::viewGoPanel(Ljava/lang/String;));
         $wnd.viewSearchPanel = $entry(@org.bbop.apollo.gwt.client.MainPanel::viewSearchPanel(Ljava/lang/String;Ljava/lang/String;));
     }-*/;
@@ -1291,9 +1290,21 @@ public class MainPanel extends Composite {
         return currentSequence;
     }
 
+    public void addOpenTranscript(String uniqueName){ annotatorPanel.addOpenTranscript(uniqueName);}
+    public void removeOpenTranscript(String uniqueName){ annotatorPanel.removeOpenTranscript(uniqueName);}
+
+    public void setSelectedAnnotationInfo(AnnotationInfo annotationInfo){
+        annotatorPanel.setSelectedAnnotationInfo(annotationInfo);
+    }
 
     public String getCommonDataDirectory() {
         return commonDataDirectory;
+    }
+
+
+    public static String getRange(){
+        if(currentSequence == null ) return null ;
+        return currentSequence.getName() + ":" +  currentStartBp  + ".." + currentEndBp;
     }
 
     SequenceInfo setCurrentSequenceAndEnds(SequenceInfo newSequence) {
@@ -1303,6 +1314,16 @@ public class MainPanel extends Composite {
         currentSequence.setStartBp(currentStartBp);
         currentSequence.setEndBp(currentEndBp);
         return currentSequence;
+    }
+
+
+    public void setHighestPermissionForUser(PermissionEnum highestPermissionForUser) {
+
+        this.highestPermissionForUser = highestPermissionForUser;
+    }
+
+    public PermissionEnum getHighestPermissionForUser() {
+        return highestPermissionForUser;
     }
 
 }
