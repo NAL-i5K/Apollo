@@ -7,7 +7,7 @@ System.getenv().each {
 
 Boolean checkBooleanEnvironment(String environment,Boolean defaultValue  ){
     if(System.getenv(environment)==null || System.getenv(environment).trim().replaceAll(/"/,"").replaceAll(/'/,"").size()==0){
-        println "'${environment}' not properly specified '${System.getenv(environment)}' so returning default '${defaultValue}'."
+        println "'${environment}' not specified '${System.getenv(environment)}' so returning default '${defaultValue}'."
         return defaultValue
     }
     boolean returnValue = Boolean.valueOf(System.getenv(environment))
@@ -143,7 +143,7 @@ apollo {
 jbrowse {
     git {
         url = "https://github.com/GMOD/jbrowse"
-        branch = "1.16.8-release"
+        branch = "1.16.9-release"
     }
     plugins {
         ScreenShotPlugin{
