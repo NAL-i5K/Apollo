@@ -102,7 +102,8 @@ jbrowse {
 //        branch = "master"
 //	  tag = "1.0.0"
 //	  tag = "e9a005cf86a40ad4b2a4aaebcbf914a866ff7f3b"
-	  tag = "maint/1.12.5-apollo"
+//	  tag = "maint/1.12.5-apollo"
+	  tag = "1.16.9-release"
        alwaysPull = true
        alwaysRecheck = true
 
