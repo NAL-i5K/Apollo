@@ -6,8 +6,16 @@
    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 
     <!-- USWDS Design Systenm -->
-    <link rel="stylesheet" href="uswds/css/uswds.min.css">
-    <script src="uswds/js/uswds.min.js"></script>
+<!--
+    <asset:stylesheet src="application.css"/>
+    <asset:javascript src="application.js"/>
+    <asset:link rel="shortcut icon" href="webapollo_favicon.ico" type="image/x-icon"/>
+    <asset:image src="ApolloLogo_100x36.png" alt="Web Apollo"/></a>
+
+-->
+    <asset:stylesheet src="uswds.min.css"/>
+    <asset:stylesheet src="nal.css"/>
+    <asset:javascript src="uswds.min.js"/>
 
     <!-- Source Sans Pro - Google Font -->
     <link rel="preconnect" href="https://fonts.gstatic.com">
@@ -16,14 +24,13 @@
 
 </head>
 <body>
-
     <!-- Government Banner -->
     <section class="usa-banner" aria-label="Official government website">
         <div class="usa-accordion">
             <header class="usa-banner__header">
                 <div class="usa-banner__inner">
                     <div class="grid-col-auto">
-                        <img class="usa-banner__header-flag" src="/assets/img/us_flag_small.png" alt="U.S. flag">
+			<asset:image src="us_flag_small.png" alt="U.S. flag" class="usa-banner__header-flag"/>
                     </div>
                     <div class="grid-col-fill tablet:grid-col-auto">
                         <p class="usa-banner__header-text">An official website of the United States government</p>
@@ -38,8 +45,7 @@
             <div class="usa-banner__content usa-accordion__content" id="gov-banner">
                 <div class="grid-row grid-gap-lg">
                     <div class="usa-banner__guidance tablet:grid-col-6">
-                        <img class="usa-banner__icon usa-media-block__img" src="/assets/img/icon-dot-gov.svg" role="img"
-                            alt="Dot gov">
+                        <asset:image class="usa-banner__icon usa-media-block__img" src="icon-dot-gov.svg" role="img"  alt="Dot gov"/>
                         <div class="usa-media-block__body">
                             <p>
                                 <strong>
@@ -53,8 +59,7 @@
                         </div>
                     </div>
                     <div class="usa-banner__guidance tablet:grid-col-6">
-                        <img class="usa-banner__icon usa-media-block__img" src="/assets/img/icon-https.svg" role="img"
-                            alt="Https">
+                        <asset:image class="usa-banner__icon usa-media-block__img" src="icon-https.svg" role="img" alt="Https"/>
                         <div class="usa-media-block__body">
                             <p>
                                 <strong>
@@ -158,7 +163,9 @@
         </div>
     </g:form>
     <!-- Footer -->
-    <footer class="usa-footer usa-footer--big">
+    <br><br><br>
+    <div class="footer" role="contentinfo">    
+      <footer class="usa-footer usa-footer--big">
         <div class="usa-footer__primary-section">
             <div class="grid-container">
                 <div class="grid-row grid-gap flex-align-center">
@@ -263,5 +270,6 @@
             </div>
         </div>
     </footer>
+      </div>
 </body>
 </html>
