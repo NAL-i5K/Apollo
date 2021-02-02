@@ -24,6 +24,7 @@
 
 </head>
 <body>
+  <div class="usa-overlay"></div>
     <!-- Government Banner -->
     <section class="usa-banner" aria-label="Official government website">
         <div class="usa-accordion">
@@ -86,7 +87,47 @@
         </div>
     </section>
     <!-- End Government Banner -->
-
+ <!-- Start NAL Header -->
+  <header class="usa-header usa-header--extended">
+    <div class="usa-navbar">
+      <div class="usa-logo nal-signature" id="extended-logo">
+        <asset:image class="nal-signature__usda-logo" src="usda-symbol.svg" />
+        <div class="nal-signature__text">
+          <div class="nal-signature__site-name">
+            <a href="../" title="Home" rel="home">i5k Workspace@NAL</a>
+          </div>
+          <div class="nal-signature__usda">
+            <a href="https://www.usda.gov">U.S. Department of Agriculture</a>
+          </div>
+        </div>
+      </div>
+      <button class="usa-menu-btn">Menu</button>
+    </div>
+    <nav aria-label="Primary navigation" class="usa-nav">
+      <div class="usa-nav__inner">
+        <button class="usa-nav__close">
+          <img src="../img/close.svg" role="img" alt="close">
+        </button>
+        <ul class="usa-nav__primary usa-accordion">
+        </ul>
+        <div class="usa-nav__secondary">
+          <ul class="usa-nav__secondary-links">
+            <li class="usa-nav__secondary-item">
+              <a href="https://www.nal.usda.gov/main/ask-question">Ask A Question</a>
+            </li>
+            <li class="usa-nav__secondary-item">
+              <a href="https://www.nal.usda.gov/main/contact-us">Contact Us</a>
+            </li>
+            <li class="usa-nav__secondary-item">
+              <a href="https://www.nal.usda.gov/main/about-us/visit-library">Visit the Library</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </header>
+</div>
+<!-- End NAL Header -->
 <div>
         <div class="content" style="margin: 30px; float:left; font-size:12px">
           <br><p></p>
