@@ -9,8 +9,8 @@
   "author": "Nathan Dunn",
   "license": "SEE LICENSE IN LICENSE.md",
   "dependencies": {
-    "jquery": "^1.7.2",
-    "jqueryui": "^1.8.24"
+    "jquery": "^1.12.4",
+    "jqueryui": "^1.11.1"
   },
   "devDependencies": {},
   "repository": {

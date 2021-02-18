@@ -103,7 +103,11 @@ jbrowse {
 //	  tag = "1.0.0"
 //	  tag = "e9a005cf86a40ad4b2a4aaebcbf914a866ff7f3b"
 //	  tag = "maint/1.12.5-apollo"
-	  tag = "1.16.9-release"
+//	  tag = "1.16.9-release"
+	  tag = "1.16.10-release"
+//          tag = "1.15.4-release"       
+//	  tag = "maint/1.12.5-apollo"
+//	  tag = "1.14.2-release"
        alwaysPull = true
        alwaysRecheck = true
 
@@ -140,6 +144,7 @@ jbrowse {
        NAL_CSS {
        	   git = "https://github.com/NAL-i5K/NAL_CSS"
        	   branch = "master"
+//       	   branch = "pre-jb-update"
            alwaysPull = true
      	   alwaysRecheck = true
        }
